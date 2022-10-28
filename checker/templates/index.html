@@ -1,10 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
     <title>Stock Checker</title>
+    <meta charset="UTF-8">
 </head>
 <body>
-{{ header }}
+    <form action="/checker/" method="post">
+        {% csrf_token %}
+        {{ form }}
+        <input type="submit" value="Submit">
+    </form>
 </body>
 </html>

@@ -1,11 +1,20 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponseRedirect
+from .forms import TickerForm
 
-# def index_view(request):
-#     context = {
-#         'header': 'Web App'
-#     }
-#     return render(request, 'index.html', context)
 
 def index(request):
-    return HttpResponse("hello, world!")
+    if request.method == 'POST':
+        form = TickerForm(request.POST)
+        if form.is_valid():
+            ticker = request.POST['ticker']
+            return HttpResponseRedirect(ticker)
+    else:
+        form = TickerForm()
+    return render(request, 'index.html', {'form': form})
+
+
+def ticker(request, tid):
+    context = {}
+    context['ticker'] = tid
+    return render(request, 'ticker.html', context)

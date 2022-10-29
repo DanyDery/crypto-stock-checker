@@ -1,15 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Ticker</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% block tittle %}{{ ticker }}{% endblock %}
+{% block content %}
+<div class="container text-center">
     <h1>{{ meta.name }} ({{ ticker }})</h1>
     <p>Description: {{ meta.description }}</p>
-    <p>Open: {{ price.open }}</p>
-    <p>High: {{ price.high }}</p>
-    <p>Low: {{ price.low }}</p>
-    <p>Close: {{ price.close }}</p>
-</body>
-</html>
+    <h4>Today's price data for {{ ticker }}:</h4>
+    <table class ='table text-center'>
+        <tr><td>Open:</td><td>${{ price.open }}</td></tr>
+        <tr><td>High:</td><td>${{ price.high }}</td></tr>
+        <tr><td>Low:</td><td>${{ price.low }}</td></tr>
+        <tr><td>Close:</td><td>${{ price.close }}</td></tr>
+    </table>
+</div>
+{% endblock %}

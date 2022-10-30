@@ -20,7 +20,7 @@ $(document).ready(
 
     $.ajax({
       type:"POST",
-      url: "/your_url/",
+      url: "/payments/",
       data:  serializedData,
       success: function(data){
         $("#result").text(data["result"]);

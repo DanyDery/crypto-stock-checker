@@ -8,7 +8,7 @@ def get_data(request):
     if request.method == 'POST':
         form = FutureValueForm(request.POST)
         if form.is_valid():
-            return HttpResponseRedirect('/value/')
+            return HttpResponseRedirect('/result/')
     else:
         form = FutureValueForm
     return render(request, 'fv.html', {'form': form})

@@ -10,25 +10,24 @@ import copy
 class StockConsumer(AsyncWebsocketConsumer):
 
     @sync_to_async
-    def addToCeleryBeat(self, stockpicker):
-        task = PeriodicTask.objects.filter(name="every-10-seconds")
+    def add_to_beat(self, stocks):
+        task = PeriodicTask.objects.filter(name="every-5-seconds")
         if len(task) > 0:
-            print("hello")  # testing that task.first() will work or not
             task = task.first()
             args = json.loads(task.args)
             args = args[0]
-            for x in stockpicker:
+            for x in stocks:
                 if x not in args:
                     args.append(x)
             task.args = json.dumps([args])
             task.save()
         else:
-            schedule, created = IntervalSchedule.objects.get_or_create(every=10, period=IntervalSchedule.SECONDS)
-            task = PeriodicTask.objects.create(interval=schedule, name='every-10-seconds',
-                                               task="mainapp.tasks.update_stock", args=json.dumps([stockpicker]))
+            schedule, created = IntervalSchedule.objects.get_or_create(every=5, period=IntervalSchedule.SECONDS)
+            task = PeriodicTask.objects.create(interval=schedule, name='every-5-seconds',
+                                               task="tracker.task.update_stock", args=json.dumps([stocks]))
 
     @sync_to_async
-    def addToStockDetail(self, stocks):
+    def add_details(self, stocks):
         user = self.scope["user"]
         for i in stocks:
             stock, created = StockDetail.objects.get_or_create(stock=i)
@@ -48,21 +47,21 @@ class StockConsumer(AsyncWebsocketConsumer):
         query_params = parse_qs(self.scope["query_string"].decode())
 
         print(query_params)
-        stockpicker = query_params['stockpicker']
+        stocks = query_params['stocks']
 
         # add to celery beat
-        await self.addToCeleryBeat(stockpicker)
+        await self.add_to_beat(stocks)
 
-        # add user to stockdetail
-        await self.addToStockDetail(stockpicker)
+        # add user to detail
+        await self.add_details(stocks)
 
         await self.accept()
 
     @sync_to_async
-    def helper_func(self):
+    def helper(self):
         user = self.scope["user"]
         stocks = StockDetail.objects.filter(user__id=user.id)
-        task = PeriodicTask.objects.get(name="every-10-seconds")
+        task = PeriodicTask.objects.get(name="every-5-seconds")
         args = json.loads(task.args)
         args = args[0]
         for i in stocks:
@@ -70,7 +69,7 @@ class StockConsumer(AsyncWebsocketConsumer):
             if i.user.count() == 0:
                 args.remove(i.stock)
                 i.delete()
-        if args == None:
+        if args is None:
             args = []
 
         if len(args) == 0:
@@ -80,7 +79,7 @@ class StockConsumer(AsyncWebsocketConsumer):
             task.save()
 
     async def disconnect(self, close_code):
-        await self.helper_func()
+        await self.helper()
 
         # Leave room group
         await self.channel_layer.group_discard(
@@ -88,7 +87,7 @@ class StockConsumer(AsyncWebsocketConsumer):
             self.channel_name
         )
 
-    # Receive message from WebSocket
+    # Receive message from Socket
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']

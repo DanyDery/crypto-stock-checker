@@ -37,7 +37,7 @@ def update_stock(self, stocks):
         result = que.get()
         data.update(result)
 
-    # send data to group
+    # group data
     channel_layer = get_channel_layer()
     loop = asyncio.new_event_loop()
 

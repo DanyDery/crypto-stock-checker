@@ -8,7 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'crypto_stock.settings')
 
 app = Celery('crypto_stock')
 app.conf.enable_utc = False
-app.conf.update(timezone='Asia/Kolkata')
+app.conf.update(timezone='Europe/Kiev')
 
 app.config_from_object(settings, namespace='CELERY')
 

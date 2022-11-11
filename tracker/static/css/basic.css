@@ -1,3 +1,14 @@
 p {
-  color: #00FFFF;
+  color: #0D6EFD;
+}
+
+input .form-control me-2 {
+    background-color:#0D6EFD;
+    color:white;
+}
+
+
+button .btn {
+    background-color:#0D6EFD;
+    color:white;
 }

@@ -27,7 +27,7 @@ async def tracker(request):
     if not is_logged:
         return HttpResponse("Login First")
     picker = request.GET.getlist('picker')
-    stockshare = str(picker)[1:-1]
+    stock_share = str(picker)[1:-1]
 
     data = {}
     available_stocks = tickers_dow()
@@ -53,4 +53,4 @@ async def tracker(request):
         description = que.get()
         data.update(description)
 
-    return render(request, 'tracker.html', {'data': data, 'room_name': 'track', 'selected_stocks': stockshare})
+    return render(request, 'tracker.html', {'data': data, 'room_name': 'track', 'selected_stocks': stock_share})

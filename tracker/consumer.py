@@ -1,17 +1,27 @@
 import json
-from tracker.models import StockDetail
+import copy
+
 from channels.generic.websocket import AsyncWebsocketConsumer
 from urllib.parse import parse_qs
-from asgiref.sync import sync_to_async, async_to_sync
+
+from asgiref.sync import sync_to_async
 from django_celery_beat.models import PeriodicTask, IntervalSchedule
-import copy
+
+from tracker.models import StockDetail
 
 
 class StockConsumer(AsyncWebsocketConsumer):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(args, kwargs)
+        self.room_group_name = None
+        self.room_name = None
+
     @sync_to_async
     def add_to_beat(self, stocks):
+
         task = PeriodicTask.objects.filter(name="every-5-seconds")
+
         if len(task) > 0:
             task = task.first()
             args = json.loads(task.args)
@@ -24,7 +34,7 @@ class StockConsumer(AsyncWebsocketConsumer):
         else:
             schedule, created = IntervalSchedule.objects.get_or_create(every=5, period=IntervalSchedule.SECONDS)
             task = PeriodicTask.objects.create(interval=schedule, name='every-5-seconds',
-                                               task="tracker.task.update_stock", args=json.dumps([stocks]))
+                                               task="tracker.tasks.update_stock", args=json.dumps([stocks]))
 
     @sync_to_async
     def add_details(self, stocks):
@@ -37,22 +47,17 @@ class StockConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['room_name']
         self.room_group_name = 'stock_%s' % self.room_name
 
-        # Join room group
         await self.channel_layer.group_add(
             self.room_group_name,
             self.channel_name
         )
 
-        # Parse query_string
         query_params = parse_qs(self.scope["query_string"].decode())
 
-        print(query_params)
         stocks = query_params['stocks']
 
-        # add to celery beat
         await self.add_to_beat(stocks)
 
-        # add user to detail
         await self.add_details(stocks)
 
         await self.accept()
@@ -81,18 +86,15 @@ class StockConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         await self.helper()
 
-        # Leave room group
         await self.channel_layer.group_discard(
             self.room_group_name,
             self.channel_name
         )
 
-    # Receive message from Socket
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message = text_data_json['message']
 
-        # Send message to room group
         await self.channel_layer.group_send(
             self.room_group_name,
             {
@@ -107,7 +109,6 @@ class StockConsumer(AsyncWebsocketConsumer):
         user_stocks = user.stockdetail_set.values_list('stock', flat=True)
         return list(user_stocks)
 
-    # Receive message from room group
     async def send_stock_update(self, event):
         message = event['message']
         message = copy.copy(message)
@@ -121,5 +122,4 @@ class StockConsumer(AsyncWebsocketConsumer):
             else:
                 del message[key]
 
-        # Send message to WebSocket
         await self.send(text_data=json.dumps(message))

@@ -11,7 +11,6 @@ from tracker.models import StockDetail
 
 
 class StockConsumer(AsyncWebsocketConsumer):
-
     def __init__(self, *args, **kwargs):
         super().__init__(args, kwargs)
         self.room_group_name = None
@@ -32,9 +31,15 @@ class StockConsumer(AsyncWebsocketConsumer):
             task.args = json.dumps([args])
             task.save()
         else:
-            schedule, created = IntervalSchedule.objects.get_or_create(every=5, period=IntervalSchedule.SECONDS)
-            task = PeriodicTask.objects.create(interval=schedule, name='every-5-seconds',
-                                               task="tracker.tasks.update_stock", args=json.dumps([stocks]))
+            schedule, created = IntervalSchedule.objects.get_or_create(
+                every=5, period=IntervalSchedule.SECONDS
+            )
+            task = PeriodicTask.objects.create(
+                interval=schedule,
+                name="every-5-seconds",
+                task="tracker.tasks.update_stock",
+                args=json.dumps([stocks]),
+            )
 
     @sync_to_async
     def add_details(self, stocks):
@@ -44,17 +49,14 @@ class StockConsumer(AsyncWebsocketConsumer):
             stock.user.add(user)
 
     async def connect(self):
-        self.room_name = self.scope['url_route']['kwargs']['room_name']
-        self.room_group_name = 'stock_%s' % self.room_name
+        self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
+        self.room_group_name = "stock_%s" % self.room_name
 
-        await self.channel_layer.group_add(
-            self.room_group_name,
-            self.channel_name
-        )
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
         query_params = parse_qs(self.scope["query_string"].decode())
 
-        stocks = query_params['stocks']
+        stocks = query_params["stocks"]
 
         await self.add_to_beat(stocks)
 
@@ -86,31 +88,24 @@ class StockConsumer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         await self.helper()
 
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message = text_data_json['message']
+        message = text_data_json["message"]
 
         await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'send_update',
-                'message': message
-            }
+            self.room_group_name, {"type": "send_update", "message": message}
         )
 
     @sync_to_async
     def select_stocks(self):
         user = self.scope["user"]
-        user_stocks = user.stockdetail_set.values_list('stock', flat=True)
+        user_stocks = user.stockdetail_set.values_list("stock", flat=True)
         return list(user_stocks)
 
     async def send_stock_update(self, event):
-        message = event['message']
+        message = event["message"]
         message = copy.copy(message)
 
         user_stocks = await self.select_stocks()

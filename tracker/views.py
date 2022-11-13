@@ -11,7 +11,7 @@ from asgiref.sync import sync_to_async
 
 def collector(request):
     stocks = tickers_dow()
-    return render(request, 'collector.html', {'stocks': stocks})
+    return render(request, "collector.html", {"stocks": stocks})
 
 
 @sync_to_async
@@ -26,7 +26,7 @@ async def tracker(request):
     is_logged = await check_authenticated(request)
     if not is_logged:
         return HttpResponse("Login First")
-    picker = request.GET.getlist('picker')
+    picker = request.GET.getlist("picker")
     stock_share = str(picker)[1:-1]
 
     data = {}
@@ -42,7 +42,10 @@ async def tracker(request):
     que = queue.Queue()
 
     for i in range(num_threads):
-        thread = Thread(target=lambda q, arg: q.put({picker[i]: get_quote_table(arg)}), args=(que, picker[i]))
+        thread = Thread(
+            target=lambda q, arg: q.put({picker[i]: get_quote_table(arg)}),
+            args=(que, picker[i]),
+        )
         thread_list.append(thread)
         thread_list[i].start()
 
@@ -53,4 +56,8 @@ async def tracker(request):
         description = que.get()
         data.update(description)
 
-    return render(request, 'tracker.html', {'data': data, 'room_name': 'track', 'selected_stocks': stock_share})
+    return render(
+        request,
+        "tracker.html",
+        {"data": data, "room_name": "track", "selected_stocks": stock_share},
+    )

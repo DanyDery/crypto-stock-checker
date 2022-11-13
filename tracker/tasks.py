@@ -25,8 +25,15 @@ def update_stock(self, stocks):
 
     for i in range(num_threads):
         thread = Thread(
-            target=lambda q, arg: q.put({stocks[i]: json.loads(json.dumps(get_quote_table(arg), ignore_nan=True))}),
-            args=(que, stocks[i]))
+            target=lambda q, arg: q.put(
+                {
+                    stocks[i]: json.loads(
+                        json.dumps(get_quote_table(arg), ignore_nan=True)
+                    )
+                }
+            ),
+            args=(que, stocks[i]),
+        )
         thread_list.append(thread)
         thread_list[i].start()
 
@@ -37,15 +44,19 @@ def update_stock(self, stocks):
         result = que.get()
         data.update(result)
 
-    # group data
     channel_layer = get_channel_layer()
     loop = asyncio.new_event_loop()
 
     asyncio.set_event_loop(loop)
 
-    loop.run_until_complete(channel_layer.group_send("stock_track", {
-        'type': 'send_stock_update',
-        'message': data,
-    }))
+    loop.run_until_complete(
+        channel_layer.group_send(
+            "stock_track",
+            {
+                "type": "send_stock_update",
+                "message": data,
+            },
+        )
+    )
 
-    return 'Completed'
+    return "Completed"

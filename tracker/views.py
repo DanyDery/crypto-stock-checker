@@ -1,5 +1,3 @@
-from threading import Thread
-
 from django.http.response import HttpResponse
 from django.shortcuts import render
 from yahoo_fin.stock_info import *

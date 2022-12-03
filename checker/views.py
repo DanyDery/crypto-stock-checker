@@ -4,6 +4,7 @@ from .forms import TickerForm
 from .tingo import get_meta_data, get_price_data
 from .prediction import *
 
+
 def index(request):
     if request.method == "POST":
         form = TickerForm(request.POST)

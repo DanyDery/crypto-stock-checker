@@ -45,8 +45,9 @@
                       <a class="nav-link disabled">English (UK)</a>
                   </li>
               </ul>
-              <form class="d-flex" role="search">
-                  <input class="form-control me-2" type="search" placeholder="Ticker Symbol" aria-label="Search">
+              <form class="d-flex" method='post' action="/checker/" role="search">
+                  {% csrf_token %}
+                  {{ form }}
                   <button class="btn btn-outline-light" type="submit">Search</button>
               </form>
           </div>
